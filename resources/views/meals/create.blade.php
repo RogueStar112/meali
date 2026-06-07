@@ -1,5 +1,6 @@
 @extends('layouts.app')
-@section('title', 'Log a Meal — Plated')
+@section('title', 'Log a Meal — Mealli')
+
 
 @push('styles')
 <style>
@@ -9,6 +10,13 @@
         align-items: flex-start;
         justify-content: center;
         padding: 44px 24px 60px;
+    }
+
+    .field-title {
+        font-family: 'Outfit', sans-serif;
+        font-weight: 600;
+        color: var(--text-secondary);
+        
     }
 
     .form-card {
@@ -124,7 +132,7 @@
     input[type="text"],
     input[type="date"],
     input[type="datetime-local"],
-    input[type="number"] {
+    input[type="number"], .previous-meal-gallery  {
         width: 100%;
         font-family: 'Outfit', sans-serif;
         font-size: 0.88rem;
@@ -137,6 +145,21 @@
         transition: border-color 0.2s, box-shadow 0.2s;
         -webkit-appearance: none;
     }
+
+    #api-fill {
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.88rem;
+        color: var(--text-primary);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        -webkit-appearance: none;
+        opacity: 0.3;
+    }
+
     input:focus {
         border-color: var(--text-primary);
         box-shadow: 0 0 0 3px rgba(28,25,23,0.07);
@@ -204,6 +227,80 @@
         margin-top: 12px;
         min-height: 22px;
     }
+
+    .previous-meal-img {
+        border-radius: 9999px;
+        object-fit: cover;
+        opacity: 1;
+    }
+
+    .previous-meal-img:hover {
+        transition: opacity 0.15s;
+        opacity: 0.4;
+    }
+
+    .previous-meal-gallery {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 3px;
+        /* justify-content: space-around; */
+    }
+    
+    .previous-meal-img-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        background:rgba(0,0,0,0.6);
+        border-radius: 9999px;
+    }
+
+    .previous-meal-img-container:hover .previous-meal-img-title {
+        opacity: 1;
+        transition: 0.15s;
+        visibility: visible;
+    }
+    
+
+    .previous-meal-img-title {
+        position: absolute;
+        text-align: center;
+        font-size: 75%;
+        opacity: 0;
+        user-select: none !important;
+        visibility: none;
+    }
+
+    .previous-meal-img-title {
+        color: white;
+    }
+
+    .previous-meals-title {
+        margin-bottom: 10px;
+        
+    }
+
+    .field-name-container {
+        display: flex;
+        justify-content: space-between;
+        gap: 5px;
+    }
+
+    .api-fill-active {
+        background-color: green !important;
+        color: white !important;
+        opacity: 1 !important;
+        transition: 0.15s;
+        cursor: pointer;
+    }
+
+    .cursor-clickable {
+        cursor: pointer;
+    }
+    
+
+
 </style>
 @endpush
 
@@ -224,6 +321,8 @@
 
         <div class="form-title">Log a meal</div>
         <div class="form-subtitle">Track what you ate and your macros.</div>
+
+        {{-- {{ dd($previous_meals) }} --}}
 
         <form method="POST" action="{{ route('meals.store') }}" enctype="multipart/form-data">
             @csrf
@@ -254,15 +353,42 @@
             </div>
             @error('image') <div class="error">{{ $message }}</div> @enderror
 
+            <div class="field previous-meals">
+                
+                <p class="field-title previous-meals-title">Previous meals</p>
+
+                <div class="previous-meal-gallery">
+                @foreach($previous_meals as $previous_meal)
+
+                <div class="previous-meal-img-container cursor-clickable">
+                    
+                    <p class="previous-meal-img-title">{{$previous_meal->name}}</p>
+
+                    <img class="previous-meal-img" src="{{ Storage::url($previous_meal->image_path) }}" width="64" height="64" /> 
+
+
+                </div>
+
+
+
+                @endforeach
+                </div>
+
+            </div>
             {{-- Meal name --}}
             <div class="field">
                 <label for="name">Meal name</label>
-                <input type="text" id="name" name="name"
-                       value="{{ old('name') }}"
-                       placeholder="e.g. Grilled chicken & rice"
-                       class="{{ $errors->has('name') ? 'is-invalid' : '' }}"
-                       autocomplete="off">
-                @error('name') <div class="error">{{ $message }}</div> @enderror
+
+                <div class="field-name-container">
+                    <input type="text" id="name" name="name"
+                        value="{{ old('name') }}"
+                        placeholder="e.g. Grilled chicken & rice"
+                        class="{{ $errors->has('name') ? 'is-invalid' : '' }}"
+                        autocomplete="off">
+                    @error('name') <div class="error">{{ $message }}</div> @enderror
+                    <button id="api-fill">API Fill</button>
+                </div>
+
             </div>
 
             {{-- Date --}}
@@ -346,4 +472,26 @@
         </form>
     </div>
 </div>
+
+<script>
+
+
+    $('#name').on('change', function() {
+
+        console.log('this is working');
+
+        if($('#name').val()) {
+            $('#api-fill').addClass('api-fill-active');
+            $('#api-fill').removeAttr('disabled');
+        
+        } else {
+            $('#api-fill').removeClass('api-fill-active');
+            $('#api-fill').attr('disabled');
+        }
+
+    });
+
+</script>
 @endsection
+
+

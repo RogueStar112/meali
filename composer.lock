@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b5d5eeaf14f21ac26e9de5f454d95787",
+    "content-hash": "2ac363660ba9ae53c4ee0bbd60d8a4ed",
     "packages": [
         {
             "name": "brick/math",
@@ -2536,6 +2536,157 @@
                 }
             ],
             "time": "2026-02-16T23:10:27+00:00"
+        },
+        {
+            "name": "openfoodfacts/openfoodfacts-laravel",
+            "version": "v0.8.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/openfoodfacts/openfoodfacts-laravel.git",
+                "reference": "e38f977f5addc060b161d4b0c34cb60bf563dc18"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/openfoodfacts/openfoodfacts-laravel/zipball/e38f977f5addc060b161d4b0c34cb60bf563dc18",
+                "reference": "e38f977f5addc060b161d4b0c34cb60bf563dc18",
+                "shasum": ""
+            },
+            "require": {
+                "guzzlehttp/guzzle": "^7.4",
+                "illuminate/support": "^11.0|^12.0|^13.0",
+                "openfoodfacts/openfoodfacts-php": "^0.3.0",
+                "php": "^8.2"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.9.5",
+                "larastan/larastan": "^2.9|^3.1",
+                "orchestra/testbench": "^9.0|^10.0|^11.0",
+                "phpstan/phpstan": "^1.10|^2.1",
+                "phpstan/phpstan-phpunit": "^1.3|^2.0",
+                "phpunit/phpunit": "^10.5|^11.5.3|^12.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "OpenFoodFacts": "OpenFoodFacts\\Laravel\\Facades\\OpenFoodFacts"
+                    },
+                    "providers": [
+                        "OpenFoodFacts\\Laravel\\OpenFoodFactsServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "OpenFoodFacts\\Laravel\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Eddie Palmans",
+                    "email": "eddie@palmans.nl"
+                }
+            ],
+            "description": "Open Food Facts API wrapper for Laravel",
+            "homepage": "https://github.com/openfoodfacts/openfoodfacts-laravel",
+            "keywords": [
+                "laravel",
+                "openfoodfacts",
+                "php"
+            ],
+            "support": {
+                "issues": "https://github.com/openfoodfacts/openfoodfacts-laravel/issues",
+                "source": "https://github.com/openfoodfacts/openfoodfacts-laravel/tree/v0.8.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/openfoodfacts",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-06-06T21:30:47+00:00"
+        },
+        {
+            "name": "openfoodfacts/openfoodfacts-php",
+            "version": "v0.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/openfoodfacts/openfoodfacts-php.git",
+                "reference": "885b2e977922a61396ebbb967a7910f4b1cae0fb"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/openfoodfacts/openfoodfacts-php/zipball/885b2e977922a61396ebbb967a7910f4b1cae0fb",
+                "reference": "885b2e977922a61396ebbb967a7910f4b1cae0fb",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-gd": "*",
+                "ext-json": "*",
+                "guzzlehttp/guzzle": "^7.4",
+                "php": "^8.1",
+                "psr/log": "^3.0",
+                "psr/simple-cache": "^3.0"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.9.5",
+                "phpstan/phpstan": "^1.8.2",
+                "phpstan/phpstan-phpunit": "^1.1.1",
+                "phpunit/phpunit": "^9.5.21",
+                "symfony/cache": "^6.1.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "OpenFoodFacts\\": "src/",
+                    "OpenFoodFactsTests\\": "tests/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Roberto Moreno",
+                    "email": "rmorenp@rampmaster.org",
+                    "homepage": "https://rampmaster.org/",
+                    "role": "Wrapper Developer"
+                },
+                {
+                    "name": "Colin Benoit",
+                    "homepage": "https://github.com/Benoit382",
+                    "role": "PHP Developer"
+                }
+            ],
+            "description": "Open Food Facts API Wrapper, the open database about food.",
+            "homepage": "https://world.openfoodfacts.org/",
+            "support": {
+                "chat": "https://slack.openfoodfacts.org/",
+                "email": "rmorenp@rampamster.org",
+                "issues": "https://github.com/openfoodfacts/openfoodfacts-php/issues",
+                "source": "https://github.com/openfoodfacts/openfoodfacts-php"
+            },
+            "funding": [
+                {
+                    "url": "https://donate.openfoodfacts.org/?utm_source=github&utf_medium=web&utm_campaign=funding_links",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/openfoodfacts",
+                    "type": "github"
+                },
+                {
+                    "url": "https://opencollective.com/openfoodfacts-server",
+                    "type": "open_collective"
+                }
+            ],
+            "time": "2024-05-01T08:07:55+00:00"
         },
         {
             "name": "phpoption/phpoption",

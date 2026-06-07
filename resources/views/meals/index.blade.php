@@ -111,6 +111,13 @@
         display: block;
         transition: transform 0.4s ease;
     }
+
+    .meal-img-wrap .meal-name-container {
+        position: absolute;
+        bottom: 0;
+        color: white;
+        
+    }
     .meal-card:hover .meal-img-wrap img { transform: scale(1.04); }
 
     .meal-img-placeholder {
@@ -129,11 +136,12 @@
     .meal-name-and-time {
         display: flex;
         justify-content: space-between;
+        align-items: center;
         font-size: 0.88rem;
     }
 
     .meal-time {
-        color: var(--text-muted);
+        padding: 3px;
     }
 
 
@@ -144,7 +152,11 @@
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-        margin-bottom: 8px;
+        /* margin-bottom: 8px; */
+        /* padding: 6px; */
+        border-top-right-radius: 3px;
+        background: #ffffff;
+        background: linear-gradient(180deg,rgba(0, 0, 0, 0) 0%, rgb(255, 255, 255) 66%);
     }
     .meal-macros {
         display: flex;
@@ -214,6 +226,9 @@
     .meal-name-container {
         display: flex;
         justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        
     }
 </style>
 @endpush
@@ -302,15 +317,17 @@
                                         </svg>
                                     </div>
                                 @endif
+
                             </div>
 
                             {{-- Body --}}
                             <div class="meal-body">
-
-                                <div class="meal-name-container">
+                                              <div class="meal-name-container">
                                     <div class="meal-name" title="{{ $meal->name }}">{{ $meal->name }}</div>
-                                    <div>{{date('H:i', strtotime($meal->eaten_at))}}</div>
+                                    <div class="meal-time">{{date('H:i', strtotime($meal->eaten_at))}}</div>
                                 </div>
+
+                        
                                 <div class="meal-macros">
                                     <span class="macro macro-cal">{{ $meal->calories }} kcal</span>
                                     <span class="macro macro-pro">{{ $meal->protein }}g P</span>

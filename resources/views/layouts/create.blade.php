@@ -224,6 +224,7 @@
         <div class="form-title">Log a meal</div>
         <div class="form-subtitle">Track what you ate and your macros.</div>
 
+        
         <form method="POST" action="{{ route('meals.store') }}" enctype="multipart/form-data">
             @csrf
 
