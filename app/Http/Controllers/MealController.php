@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Http;
 use App\Models\Meal;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use OpenFoodFacts;
+use App\Services\OpenFoodFactsService;
 
 class MealController extends Controller
 {
@@ -20,8 +22,45 @@ class MealController extends Controller
         return view('meals.index', compact('mealsByDate'));
     }
 
+    public function api_search(Request $request, $query) {
+
+        $query = OpenFoodFacts::find($query);
+
+        return $query->message[0];
+
+    }
+
+    public function api_search_v2(Request $request, OpenFoodFactsService $off, $query)
+    {
+
+        $response = Http::get('https://world.openfoodfacts.org/cgi/search.pl', [
+            'search_terms' => $query,
+            'search_simple' => 1,
+            'action'        => 'process',
+            'json'          => 1,
+            'page_size'     => 1,
+            'fields'        => 'product_name,brands,nutriments',
+        ]);
+
+        $product = $response->json('products.0');
+
+        if (!$product) {
+            return response()->json(['error' => 'No product found'], 404);
+        }
+
+        $n = $product['nutriments'] ?? [];
+
+            return response()->json([
+        'name'     => $product['product_name'] ?? 'Unknown',
+        'calories' => $n['energy-kcal_100g'] ?? null,
+        'protein'  => $n['proteins_100g'] ?? null,
+        'carbs'    => $n['carbohydrates_100g'] ?? null,
+        'fat'      => $n['fat_100g'] ?? null,
+    ]);
+    }
+
     public function barcode_test() {
-        $product = OpenFoodFacts::barcode('20203467');
+        $product = OpenFoodFacts::barcode('7622210898548');
         dd($product);
 
         /*

@@ -243,7 +243,8 @@
         display: flex;
         justify-content: center;
         flex-wrap: wrap;
-        gap: 3px;
+        gap: 2px;
+        padding: 9px;
         /* justify-content: space-around; */
     }
     
@@ -306,28 +307,66 @@
 
 @section('content')
 <div class="create-page">
-    <div class="form-card"
-         x-data="{
-            preview: null,
-            calories: '',
-            protein: '',
-            carbs: '',
-            fat: '',
-            setImage(e) {
-                const f = e.target.files[0];
-                if (f) this.preview = URL.createObjectURL(f);
-            }
-         }">
+   <div class="form-card"
+     x-data="{
+        preview: null,
+        name: '{{ old('name') }}',
+        date: '{{ old('date') }}',
+        calories: '{{ old('calories') }}',
+        protein: '{{ old('protein') }}',
+        carbs: '{{ old('carbs') }}',
+        fat: '{{ old('fat') }}',
+        setImage(e) {
+            const f = e.target.files[0];
+            if (f) this.preview = URL.createObjectURL(f);
+        },
+        async loadMeal(id) {
+            const res = await fetch(`/api/meal/get/${id}`);
+            const meal = await res.json();
+            this.name = meal.name;
+            this.calories = meal.calories;
+            this.protein = meal.protein;
+            this.carbs = meal.carbs;
+            this.fat = meal.fat;
+            this.preview = `/storage/${meal.image_path}`; // or whatever your public path is
+        }
+     }">
 
         <div class="form-title">Log a meal</div>
         <div class="form-subtitle">Track what you ate and your macros.</div>
 
         {{-- {{ dd($previous_meals) }} --}}
-
+    
         <form method="POST" action="{{ route('meals.store') }}" enctype="multipart/form-data">
             @csrf
 
-            {{-- Image upload --}}
+          
+            {{-- Meal name --}}
+            <div class="field">
+                <label for="name">Meal name</label>
+
+                <div class="field-name-container">
+                    <input type="text" id="name" name="name" x-model="name" 
+                        value="{{ old('name') }}"
+                        placeholder="e.g. Grilled chicken & rice"
+                        class="{{ $errors->has('name') ? 'is-invalid' : '' }}"
+                        autocomplete="off">
+                    @error('name') <div class="error">{{ $message }}</div> @enderror
+                    <button id="api-fill">API Fill</button>
+                </div>
+
+            </div>
+
+            {{-- Date --}}
+            <div class="field">
+                <label for="eaten_at">Date & Time</label>
+                <input x-model="date" type="datetime-local" id="eaten_at" name="eaten_at"
+                       value="{{ old('eaten_at', $today) }}"
+                       class="{{ $errors->has('eaten_at') ? 'is-invalid' : '' }}">
+                @error('eaten_at') <div class="error">{{ $message }}</div> @enderror
+            </div>
+
+              {{-- Image upload --}}
             <label>Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">(optional)</span></label>
             <div class="upload-zone" :class="{ 'has-preview': preview }"
                  @click="$refs.fileInput.click()">
@@ -343,7 +382,7 @@
 
                 {{-- Preview --}}
                 <div class="upload-preview" x-show="preview">
-                    <img :src="preview" alt="Preview">
+                    <img :src="preview" alt="Preview" x-model="preview">
                     <div class="upload-preview-overlay">
                         <span>Change photo</span>
                     </div>
@@ -360,14 +399,22 @@
                 <div class="previous-meal-gallery">
                 @foreach($previous_meals as $previous_meal)
 
-                <div class="previous-meal-img-container cursor-clickable">
+                {{-- <form @submit.prevent="" action="{{ url("api/meal/get/$previous_meal->id")  }}" >
+                    @csrf --}}
                     
-                    <p class="previous-meal-img-title">{{$previous_meal->name}}</p>
+                    {{-- <button type="submit" >
+                        <p class="previous-meal-img-title">{{$previous_meal->name}}</p>
 
-                    <img class="previous-meal-img" src="{{ Storage::url($previous_meal->image_path) }}" width="64" height="64" /> 
+                        <img class="previous-meal-img" src="{{ Storage::url($previous_meal->image_path) }}" width="64" height="64" @click="" /> 
+                    </button> --}}
+
+                    <button class="previous-meal-img-container" type="button" @click="loadMeal({{ $previous_meal->id }})">
+                        <p class="previous-meal-img-title">{{ $previous_meal->name }}</p>
+                        <img class="previous-meal-img" src="{{ Storage::url($previous_meal->image_path) }}" width="64" height="64" />
+                    </button>
 
 
-                </div>
+                {{-- </form> --}}
 
 
 
@@ -375,35 +422,11 @@
                 </div>
 
             </div>
-            {{-- Meal name --}}
-            <div class="field">
-                <label for="name">Meal name</label>
-
-                <div class="field-name-container">
-                    <input type="text" id="name" name="name"
-                        value="{{ old('name') }}"
-                        placeholder="e.g. Grilled chicken & rice"
-                        class="{{ $errors->has('name') ? 'is-invalid' : '' }}"
-                        autocomplete="off">
-                    @error('name') <div class="error">{{ $message }}</div> @enderror
-                    <button id="api-fill">API Fill</button>
-                </div>
-
-            </div>
-
-            {{-- Date --}}
-            <div class="field">
-                <label for="eaten_at">Date & Time</label>
-                <input type="datetime-local" id="eaten_at" name="eaten_at"
-                       value="{{ old('eaten_at', $today) }}"
-                       class="{{ $errors->has('eaten_at') ? 'is-invalid' : '' }}">
-                @error('eaten_at') <div class="error">{{ $message }}</div> @enderror
-            </div>
 
             <hr class="divider">
 
             {{-- Macros label --}}
-            <label style="margin-bottom:14px;display:block;">Macros</label>
+            <label style="margin-bottom:14px;display:block;">Macros (per 100g/serving)</label>
 
             {{-- Calories (full width) --}}
             <div class="field">
@@ -478,8 +501,6 @@
 
     $('#name').on('change', function() {
 
-        console.log('this is working');
-
         if($('#name').val()) {
             $('#api-fill').addClass('api-fill-active');
             $('#api-fill').removeAttr('disabled');
@@ -490,6 +511,29 @@
         }
 
     });
+
+    $('#api-fill').on('click', function(e) {
+        e.preventDefault();
+
+        const name = document.getElementById('name').value;
+
+        fetch(`/meal/search/${encodeURIComponent(name)}`, { cache: 'no-store' })
+            .then(res => res.json())
+            .then(data => {
+                if (data.error) {
+                    console.error(data.error);
+                    return;
+                }
+
+                $('#calories').val(Math.round(data['calories'], 0));
+                $('#fat').val(Math.round(data['fat'], 1));
+                $('#carbs').val(Math.round(data['carbs'], 1));
+                $('#protein').val(Math.round(data['protein'], 1));
+
+
+                console.log(data); // { name, brand, per_100g: { calories, protein, ... } }
+            });
+    })
 
 </script>
 @endsection
