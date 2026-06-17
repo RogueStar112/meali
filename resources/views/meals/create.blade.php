@@ -1,541 +1,177 @@
 @extends('layouts.app')
-@section('title', 'Log a Meal — Mealli')
-
+@section('title', ($meal ? 'Edit' : 'Log a') . ' Meal — Plated')
 
 @push('styles')
 <style>
-    .create-page {
-        min-height: calc(100vh - var(--nav-h));
-        display: flex;
-        align-items: flex-start;
-        justify-content: center;
-        padding: 44px 24px 60px;
-    }
+    .create-page { min-height:calc(100vh - var(--nav-h)); display:flex; align-items:flex-start; justify-content:center; padding:44px 24px 60px; }
+    .form-card { background:var(--surface); border-radius:16px; box-shadow:var(--shadow-lg); width:100%; max-width:540px; padding:40px 40px 44px; animation:cardIn .3s ease both; }
+    @keyframes cardIn { from{opacity:0;transform:translateY(12px);} to{opacity:1;transform:translateY(0);} }
+    .form-title { font-family:'Cormorant Garamond',serif; font-size:1.9rem; font-weight:600; line-height:1; margin-bottom:4px; }
+    .form-subtitle { font-size:.8rem; color:var(--text-muted); margin-bottom:32px; }
 
-    .field-title {
-        font-family: 'Outfit', sans-serif;
-        font-weight: 600;
-        color: var(--text-secondary);
-        
-    }
+    .upload-zone { aspect-ratio:16/9; border:2px dashed var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; position:relative; background:var(--bg); transition:border-color .2s,background .2s; margin-bottom:28px; }
+    .upload-zone:hover { border-color:var(--text-muted); background:var(--surface-hover); }
+    .upload-zone.has-preview { border-style:solid; border-color:var(--border); }
+    .upload-prompt { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; color:var(--text-muted); pointer-events:none; }
+    .upload-prompt-label { font-size:.8rem; font-weight:500; color:var(--text-secondary); }
+    .upload-prompt-sub { font-size:.72rem; color:var(--text-muted); }
+    .upload-preview { position:absolute; inset:0; }
+    .upload-preview img { width:100%; height:100%; object-fit:cover; display:block; }
+    .upload-preview-overlay { position:absolute; inset:0; background:rgba(0,0,0,0); display:flex; align-items:center; justify-content:center; transition:background .2s; }
+    .upload-zone:hover .upload-preview-overlay { background:rgba(0,0,0,.35); }
+    .upload-preview-overlay span { color:#fff; font-size:.78rem; font-weight:500; opacity:0; transition:opacity .2s; }
+    .upload-zone:hover .upload-preview-overlay span { opacity:1; }
+    input[type="file"] { display:none; }
 
-    .form-card {
-        background: var(--surface);
-        border-radius: 16px;
-        box-shadow: var(--shadow-lg);
-        width: 100%;
-        max-width: 520px;
-        padding: 40px 40px 44px;
-        animation: cardIn 0.3s ease both;
-    }
-    @keyframes cardIn {
-        from { opacity: 0; transform: translateY(12px); }
-        to   { opacity: 1; transform: translateY(0); }
-    }
+    .field { margin-bottom:20px; }
+    .field-label { display:block; font-size:.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:6px; }
+    .field-label .optional { font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted); }
+    input[type="text"], input[type="date"], input[type="number"] { width:100%; font-family:'Outfit',sans-serif; font-size:.88rem; color:var(--text-primary); background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px; outline:none; transition:border-color .2s,box-shadow .2s; -webkit-appearance:none; }
+    input:focus { border-color:var(--text-primary); box-shadow:0 0 0 3px rgba(128,128,128,.1); }
+    input.is-invalid { border-color:var(--fat); }
+    .error { font-size:.72rem; color:var(--fat); margin-top:5px; }
 
-    .form-title {
-        font-family: 'Cormorant Garamond', serif;
-        font-size: 1.9rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        line-height: 1;
-        margin-bottom: 4px;
-    }
-    .form-subtitle {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        margin-bottom: 32px;
-    }
+    .grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:20px; }
+    .grid-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:20px; }
+    .section-label { font-size:.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:16px; display:block; }
+    .divider { border:none; border-top:1px solid var(--border-light); margin:28px 0; }
 
-    /* ── Image upload zone ── */
-    .upload-zone {
-        aspect-ratio: 16 / 9;
-        border: 2px dashed var(--border);
-        border-radius: var(--radius);
-        overflow: hidden;
-        cursor: pointer;
-        position: relative;
-        background: var(--bg);
-        transition: border-color 0.2s, background 0.2s;
-        margin-bottom: 28px;
-    }
-    .upload-zone:hover { border-color: var(--text-muted); background: var(--border-light); }
-    .upload-zone.has-preview { border-style: solid; border-color: var(--border); }
-
-    .upload-prompt {
-        position: absolute;
-        inset: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-        color: var(--text-muted);
-        pointer-events: none;
-    }
-    .upload-prompt-label {
-        font-size: 0.8rem;
-        font-weight: 500;
-        color: var(--text-secondary);
-    }
-    .upload-prompt-sub {
-        font-size: 0.72rem;
-        color: var(--text-muted);
-    }
-
-    .upload-preview {
-        position: absolute;
-        inset: 0;
-    }
-    .upload-preview img {
-        width: 100%; height: 100%;
-        object-fit: cover;
-        display: block;
-    }
-    .upload-preview-overlay {
-        position: absolute;
-        inset: 0;
-        background: rgba(0,0,0,0);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: background 0.2s;
-    }
-    .upload-zone:hover .upload-preview-overlay {
-        background: rgba(0,0,0,0.35);
-    }
-    .upload-preview-overlay span {
-        color: white;
-        font-size: 0.78rem;
-        font-weight: 500;
-        opacity: 0;
-        transition: opacity 0.2s;
-    }
-    .upload-zone:hover .upload-preview-overlay span { opacity: 1; }
-
-    input[type="file"] { display: none; }
-
-    /* ── Form fields ── */
-    .field { margin-bottom: 20px; }
-    .field:last-of-type { margin-bottom: 0; }
-
-    label {
-        display: block;
-        font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        color: var(--text-secondary);
-        margin-bottom: 6px;
-    }
-
-    input[type="text"],
-    input[type="date"],
-    input[type="datetime-local"],
-    input[type="number"], .previous-meal-gallery  {
-        width: 100%;
-        font-family: 'Outfit', sans-serif;
-        font-size: 0.88rem;
-        color: var(--text-primary);
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 10px 14px;
-        outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        -webkit-appearance: none;
-    }
-
-    #api-fill {
-        font-family: 'Outfit', sans-serif;
-        font-size: 0.88rem;
-        color: var(--text-primary);
-        background: var(--bg);
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        padding: 10px 14px;
-        outline: none;
-        transition: border-color 0.2s, box-shadow 0.2s;
-        -webkit-appearance: none;
-        opacity: 0.3;
-    }
-
-    input:focus {
-        border-color: var(--text-primary);
-        box-shadow: 0 0 0 3px rgba(28,25,23,0.07);
-    }
-    input.is-invalid { border-color: var(--fat); }
-
-    .error {
-        font-size: 0.72rem;
-        color: var(--fat);
-        margin-top: 5px;
-    }
-
-    /* ── Macro row ── */
-    .macro-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 14px;
-        margin-bottom: 20px;
-    }
-
-    /* ── Divider ── */
-    .divider {
-        border: none;
-        border-top: 1px solid var(--border-light);
-        margin: 28px 0;
-    }
-
-    /* ── Submit ── */
-    .form-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-    }
-    .btn-back {
-        font-size: 0.8rem;
-        color: var(--text-muted);
-        text-decoration: none;
-        transition: color 0.15s;
-    }
-    .btn-back:hover { color: var(--text-primary); }
-
-    .btn-submit {
-        flex: 1;
-        max-width: 200px;
-        background: var(--accent);
-        color: #fff;
-        font-family: 'Outfit', sans-serif;
-        font-size: 0.85rem;
-        font-weight: 500;
-        padding: 12px 24px;
-        border-radius: 100px;
-        border: none;
-        cursor: pointer;
-        transition: opacity 0.15s, transform 0.15s;
-    }
-    .btn-submit:hover { opacity: 0.8; transform: translateY(-1px); }
-    .btn-submit:active { transform: translateY(0); }
-
-    /* ── Macro preview strip ── */
-    .macro-preview {
-        display: flex;
-        gap: 6px;
-        flex-wrap: wrap;
-        margin-top: 12px;
-        min-height: 22px;
-    }
-
-    .previous-meal-img {
-        border-radius: 9999px;
-        object-fit: cover;
-        opacity: 1;
-    }
-
-    .previous-meal-img:hover {
-        transition: opacity 0.15s;
-        opacity: 0.4;
-    }
-
-    .previous-meal-gallery {
-        display: flex;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 2px;
-        padding: 9px;
-        /* justify-content: space-around; */
-    }
-    
-    .previous-meal-img-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        position: relative;
-        background:rgba(0,0,0,0.6);
-        border-radius: 9999px;
-    }
-
-    .previous-meal-img-container:hover .previous-meal-img-title {
-        opacity: 1;
-        transition: 0.15s;
-        visibility: visible;
-    }
-    
-
-    .previous-meal-img-title {
-        position: absolute;
-        text-align: center;
-        font-size: 75%;
-        opacity: 0;
-        user-select: none !important;
-        visibility: none;
-    }
-
-    .previous-meal-img-title {
-        color: white;
-    }
-
-    .previous-meals-title {
-        margin-bottom: 10px;
-        
-    }
-
-    .field-name-container {
-        display: flex;
-        justify-content: space-between;
-        gap: 5px;
-    }
-
-    .api-fill-active {
-        background-color: green !important;
-        color: white !important;
-        opacity: 1 !important;
-        transition: 0.15s;
-        cursor: pointer;
-    }
-
-    .cursor-clickable {
-        cursor: pointer;
-    }
-    
-
-
+    .form-footer { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .btn-back { font-size:.8rem; color:var(--text-muted); text-decoration:none; transition:color .15s; }
+    .btn-back:hover { color:var(--text-primary); }
+    .btn-submit { flex:1; max-width:200px; background:var(--accent); color:var(--accent-fg); font-family:'Outfit',sans-serif; font-size:.85rem; font-weight:500; padding:12px 24px; border-radius:100px; border:none; cursor:pointer; transition:opacity .15s,transform .15s; }
+    .btn-submit:hover { opacity:.8; transform:translateY(-1px); }
+    .macro-preview { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; min-height:22px; }
 </style>
 @endpush
 
 @section('content')
 <div class="create-page">
-   <div class="form-card"
-     x-data="{
-        preview: null,
-        name: '{{ old('name') }}',
-        date: '{{ old('date') }}',
-        calories: '{{ old('calories') }}',
-        protein: '{{ old('protein') }}',
-        carbs: '{{ old('carbs') }}',
-        fat: '{{ old('fat') }}',
-        setImage(e) {
-            const f = e.target.files[0];
-            if (f) this.preview = URL.createObjectURL(f);
-        },
-        async loadMeal(id) {
-            const res = await fetch(`/api/meal/get/${id}`);
-            const meal = await res.json();
-            this.name = meal.name;
-            this.calories = meal.calories;
-            this.protein = meal.protein;
-            this.carbs = meal.carbs;
-            this.fat = meal.fat;
-            this.preview = `/storage/${meal.image_path}`; // or whatever your public path is
-        }
-     }">
+    <div class="form-card"
+         x-data="{
+            preview: {{ $meal && $meal->image_path ? "'" . Storage::url($meal->image_path) . "'" : 'null' }},
+            calories: '{{ old('calories', $meal->calories ?? '') }}',
+            protein:  '{{ old('protein',  $meal->protein ?? '') }}',
+            carbs:    '{{ old('carbs',    $meal->carbs ?? '') }}',
+            fat:      '{{ old('fat',      $meal->fat ?? '') }}',
+            setImage(e) {
+                const f = e.target.files[0];
+                if (f) this.preview = URL.createObjectURL(f);
+            }
+         }">
 
-        <div class="form-title">Log a meal</div>
-        <div class="form-subtitle">Track what you ate and your macros.</div>
+        <div class="form-title">{{ $meal ? 'Edit meal' : 'Log a meal' }}</div>
+        <div class="form-subtitle">{{ $meal ? 'Update the details below.' : 'Track what you ate and your macros.' }}</div>
 
-        {{-- {{ dd($previous_meals) }} --}}
-    
-        <form method="POST" action="{{ route('meals.store') }}" enctype="multipart/form-data">
+        <form method="POST"
+              action="{{ $meal ? route('meals.update', $meal) : route('meals.store') }}"
+              enctype="multipart/form-data">
             @csrf
+            @if($meal) @method('PUT') @endif
 
-          
-            {{-- Meal name --}}
-            <div class="field">
-                <label for="name">Meal name</label>
-
-                <div class="field-name-container">
-                    <input type="text" id="name" name="name" x-model="name" 
-                        value="{{ old('name') }}"
-                        placeholder="e.g. Grilled chicken & rice"
-                        class="{{ $errors->has('name') ? 'is-invalid' : '' }}"
-                        autocomplete="off">
-                    @error('name') <div class="error">{{ $message }}</div> @enderror
-                    <button id="api-fill">API Fill</button>
-                </div>
-
-            </div>
-
-            {{-- Date --}}
-            <div class="field">
-                <label for="eaten_at">Date & Time</label>
-                <input x-model="date" type="datetime-local" id="eaten_at" name="eaten_at"
-                       value="{{ old('eaten_at', $today) }}"
-                       class="{{ $errors->has('eaten_at') ? 'is-invalid' : '' }}">
-                @error('eaten_at') <div class="error">{{ $message }}</div> @enderror
-            </div>
-
-              {{-- Image upload --}}
-            <label>Photo <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">(optional)</span></label>
-            <div class="upload-zone" :class="{ 'has-preview': preview }"
-                 @click="$refs.fileInput.click()">
-
-                {{-- Placeholder --}}
+            {{-- Image --}}
+            <label class="field-label">Photo <span class="optional">(optional)</span></label>
+            <div class="upload-zone" :class="{'has-preview':preview}" @click="$refs.fileInput.click()">
                 <div class="upload-prompt" x-show="!preview">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
                         <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
                     </svg>
                     <span class="upload-prompt-label">Click to add a photo</span>
                     <span class="upload-prompt-sub">JPG, PNG, WEBP — up to 8 MB</span>
                 </div>
-
-                {{-- Preview --}}
                 <div class="upload-preview" x-show="preview">
-                    <img :src="preview" alt="Preview" x-model="preview">
-                    <div class="upload-preview-overlay">
-                        <span>Change photo</span>
-                    </div>
+                    <img :src="preview" alt="Preview">
+                    <div class="upload-preview-overlay"><span>Change photo</span></div>
                 </div>
-
                 <input type="file" name="image" accept="image/*" x-ref="fileInput" @change="setImage($event)">
             </div>
             @error('image') <div class="error">{{ $message }}</div> @enderror
 
-            <div class="field previous-meals">
-                
-                <p class="field-title previous-meals-title">Previous meals</p>
+            {{-- Name --}}
+            <div class="field">
+                <label class="field-label" for="name">Meal name</label>
+                <input type="text" id="name" name="name" value="{{ old('name', $meal->name ?? '') }}" placeholder="e.g. Grilled chicken & rice" class="{{ $errors->has('name') ? 'is-invalid' : '' }}" autocomplete="off">
+                @error('name') <div class="error">{{ $message }}</div> @enderror
+            </div>
 
-                <div class="previous-meal-gallery">
-                @foreach($previous_meals as $previous_meal)
-
-                {{-- <form @submit.prevent="" action="{{ url("api/meal/get/$previous_meal->id")  }}" >
-                    @csrf --}}
-                    
-                    {{-- <button type="submit" >
-                        <p class="previous-meal-img-title">{{$previous_meal->name}}</p>
-
-                        <img class="previous-meal-img" src="{{ Storage::url($previous_meal->image_path) }}" width="64" height="64" @click="" /> 
-                    </button> --}}
-
-                    <button class="previous-meal-img-container" type="button" @click="loadMeal({{ $previous_meal->id }})">
-                        <p class="previous-meal-img-title">{{ $previous_meal->name }}</p>
-                        <img class="previous-meal-img" src="{{ Storage::url($previous_meal->image_path) }}" width="64" height="64" />
-                    </button>
-
-
-                {{-- </form> --}}
-
-
-
-                @endforeach
-                </div>
-
+            {{-- Date --}}
+            <div class="field">
+                <label class="field-label" for="eaten_at">Date</label>
+                <input type="date" id="eaten_at" name="eaten_at" value="{{ old('eaten_at', $meal ? $meal->eaten_at->format('Y-m-d') : $today) }}" class="{{ $errors->has('eaten_at') ? 'is-invalid' : '' }}">
+                @error('eaten_at') <div class="error">{{ $message }}</div> @enderror
             </div>
 
             <hr class="divider">
 
-            {{-- Macros label --}}
-            <label style="margin-bottom:14px;display:block;">Macros (per 100g/serving)</label>
+            {{-- ── Core macros ── --}}
+            <span class="section-label">Macros</span>
 
-            {{-- Calories (full width) --}}
             <div class="field">
-                <label for="calories">Calories (kcal)</label>
-                <input type="number" id="calories" name="calories"
-                       x-model="calories"
-                       value="{{ old('calories') }}"
-                       placeholder="0" min="0" max="9999"
-                       class="{{ $errors->has('calories') ? 'is-invalid' : '' }}">
+                <label class="field-label" for="calories">Calories (kcal)</label>
+                <input type="number" id="calories" name="calories" x-model="calories" value="{{ old('calories', $meal->calories ?? '') }}" placeholder="0" min="0" max="9999" class="{{ $errors->has('calories') ? 'is-invalid' : '' }}">
                 @error('calories') <div class="error">{{ $message }}</div> @enderror
             </div>
 
-            {{-- P / C / F --}}
-            <div class="macro-row">
+            <div class="grid-3">
                 <div>
-                    <label for="protein">Protein (g)</label>
-                    <input type="number" id="protein" name="protein"
-                           x-model="protein"
-                           value="{{ old('protein') }}"
-                           placeholder="0" min="0" max="999" step="0.1"
-                           class="{{ $errors->has('protein') ? 'is-invalid' : '' }}">
+                    <label class="field-label" for="protein">Protein (g)</label>
+                    <input type="number" id="protein" name="protein" x-model="protein" value="{{ old('protein', $meal->protein ?? '') }}" placeholder="0" min="0" max="999" step="0.1" class="{{ $errors->has('protein') ? 'is-invalid' : '' }}">
                     @error('protein') <div class="error">{{ $message }}</div> @enderror
                 </div>
                 <div>
-                    <label for="carbs">Carbs (g)</label>
-                    <input type="number" id="carbs" name="carbs"
-                           x-model="carbs"
-                           value="{{ old('carbs') }}"
-                           placeholder="0" min="0" max="999" step="0.1"
-                           class="{{ $errors->has('carbs') ? 'is-invalid' : '' }}">
+                    <label class="field-label" for="carbs">Carbs (g)</label>
+                    <input type="number" id="carbs" name="carbs" x-model="carbs" value="{{ old('carbs', $meal->carbs ?? '') }}" placeholder="0" min="0" max="999" step="0.1" class="{{ $errors->has('carbs') ? 'is-invalid' : '' }}">
                     @error('carbs') <div class="error">{{ $message }}</div> @enderror
                 </div>
                 <div>
-                    <label for="fat">Fat (g)</label>
-                    <input type="number" id="fat" name="fat"
-                           x-model="fat"
-                           value="{{ old('fat') }}"
-                           placeholder="0" min="0" max="999" step="0.1"
-                           class="{{ $errors->has('fat') ? 'is-invalid' : '' }}">
+                    <label class="field-label" for="fat">Fat (g)</label>
+                    <input type="number" id="fat" name="fat" x-model="fat" value="{{ old('fat', $meal->fat ?? '') }}" placeholder="0" min="0" max="999" step="0.1" class="{{ $errors->has('fat') ? 'is-invalid' : '' }}">
                     @error('fat') <div class="error">{{ $message }}</div> @enderror
                 </div>
             </div>
 
-            {{-- Live macro preview --}}
             <div class="macro-preview">
-                <template x-if="calories">
-                    <span class="macro macro-cal" x-text="calories + ' kcal'"></span>
-                </template>
-                <template x-if="protein">
-                    <span class="macro macro-pro" x-text="protein + 'g P'"></span>
-                </template>
-                <template x-if="carbs">
-                    <span class="macro macro-carb" x-text="carbs + 'g C'"></span>
-                </template>
-                <template x-if="fat">
-                    <span class="macro macro-fat" x-text="fat + 'g F'"></span>
-                </template>
+                <template x-if="calories"><span class="macro macro-cal" x-text="calories+' kcal'"></span></template>
+                <template x-if="protein"><span class="macro macro-pro" x-text="protein+'g P'"></span></template>
+                <template x-if="carbs"><span class="macro macro-carb" x-text="carbs+'g C'"></span></template>
+                <template x-if="fat"><span class="macro macro-fat" x-text="fat+'g F'"></span></template>
+            </div>
+
+            <hr class="divider">
+
+            {{-- ── Additional nutrients ── --}}
+            <span class="section-label">Additional <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted);">— optional, defaults to 0</span></span>
+
+            <div class="grid-2">
+                <div>
+                    <label class="field-label" for="saturated_fat">Sat. fat (g)</label>
+                    <input type="number" id="saturated_fat" name="saturated_fat" value="{{ old('saturated_fat', $meal->saturated_fat ?? '') }}" placeholder="0" min="0" max="999" step="0.1">
+                    @error('saturated_fat') <div class="error">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label class="field-label" for="sugar">Sugar (g)</label>
+                    <input type="number" id="sugar" name="sugar" value="{{ old('sugar', $meal->sugar ?? '') }}" placeholder="0" min="0" max="999" step="0.1">
+                    @error('sugar') <div class="error">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label class="field-label" for="fibre">Fibre (g)</label>
+                    <input type="number" id="fibre" name="fibre" value="{{ old('fibre', $meal->fibre ?? '') }}" placeholder="0" min="0" max="999" step="0.1">
+                    @error('fibre') <div class="error">{{ $message }}</div> @enderror
+                </div>
+                <div>
+                    <label class="field-label" for="salt">Salt (g)</label>
+                    <input type="number" id="salt" name="salt" value="{{ old('salt', $meal->salt ?? '') }}" placeholder="0" min="0" max="99" step="0.01">
+                    @error('salt') <div class="error">{{ $message }}</div> @enderror
+                </div>
             </div>
 
             <hr class="divider">
 
             <div class="form-footer">
                 <a class="btn-back" href="{{ route('meals.index') }}">← Back</a>
-                <button type="submit" class="btn-submit">Save meal</button>
+                <button type="submit" class="btn-submit">{{ $meal ? 'Update meal' : 'Save meal' }}</button>
             </div>
         </form>
     </div>
 </div>
-
-<script>
-
-
-    $('#name').on('change', function() {
-
-        if($('#name').val()) {
-            $('#api-fill').addClass('api-fill-active');
-            $('#api-fill').removeAttr('disabled');
-        
-        } else {
-            $('#api-fill').removeClass('api-fill-active');
-            $('#api-fill').attr('disabled');
-        }
-
-    });
-
-    $('#api-fill').on('click', function(e) {
-        e.preventDefault();
-
-        const name = document.getElementById('name').value;
-
-        fetch(`/meal/search/${encodeURIComponent(name)}`, { cache: 'no-store' })
-            .then(res => res.json())
-            .then(data => {
-                if (data.error) {
-                    console.error(data.error);
-                    return;
-                }
-
-                $('#calories').val(Math.round(data['calories'], 0));
-                $('#fat').val(Math.round(data['fat'], 1));
-                $('#carbs').val(Math.round(data['carbs'], 1));
-                $('#protein').val(Math.round(data['protein'], 1));
-
-
-                console.log(data); // { name, brand, per_100g: { calories, protein, ... } }
-            });
-    })
-
-</script>
 @endsection
-
-
