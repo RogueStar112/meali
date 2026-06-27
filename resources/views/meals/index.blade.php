@@ -114,6 +114,10 @@
     .pct-warn { color: var(--warn); }
     .pct-over { color: var(--fat); }
 
+    .meal-img-wrap {
+        height: 120px;
+    }
+
     /* ── Meal card ── */
     .meal-card {
         background: var(--surface);
@@ -124,6 +128,7 @@
         display: flex;
         flex-direction: column;
         transition: box-shadow 0.15s;
+        height: 250px;
     }
     .meal-card:hover { box-shadow: var(--shadow-lg); }
 
@@ -138,7 +143,7 @@
     .meal-card:hover .meal-img-wrap img { transform:scale(1.04); }
     .meal-img-placeholder { width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:var(--text-muted); }
 
-    .meal-body { display:flex; flex-direction:column; }
+    .meal-body { display:flex; flex-direction:column; height: 100%; }
     .meal-name-row {
         display: flex; align-items: center;
         padding: 8px 10px;
@@ -361,15 +366,15 @@
                             <div class="meal-body">
                                 <div class="meal-name-row">
                                     <div class="meal-name" title="{{ $meal->name }}">{{ $meal->name }}</div>
-                                    <div class="meal-time">{{ $meal->created_at->format('H:i') }}</div>
+                                    <div class="meal-time">{{ $meal->eaten_at->format('H:i') }}</div>
                                 </div>
 
                                 {{-- Detailed view: macro table with % --}}
                                 <div class="meal-macros-row">
                                     @foreach([
-                                        ['Cal', $meal->calories . ' kcal', $mPctCal, 'cal'],
-                                        ['Pro', $meal->protein . 'g', $mPctPro, 'pro'],
-                                        ['Crb', $meal->carbs . 'g', $mPctCarb, 'carb'],
+                                        ['Calories', $meal->calories . ' kcal', $mPctCal, 'cal'],
+                                        ['Protein', $meal->protein . 'g', $mPctPro, 'pro'],
+                                        ['Carbs', $meal->carbs . 'g', $mPctCarb, 'carb'],
                                         ['Fat', $meal->fat . 'g', $mPctFat, 'fat'],
                                     ] as [$label, $val, $pct, $key])
                                         <div class="meal-macro-cell">
@@ -383,13 +388,15 @@
                                 {{-- Progress view: mini progress bars --}}
                                 <div class="meal-prog-strip">
                                     @foreach([
-                                        ['Cal', $mPctCal, 'cal'],
-                                        ['Pro', $mPctPro, 'pro'],
-                                        ['Crb', $mPctCarb, 'carb'],
-                                        ['Fat', $mPctFat, 'fat'],
-                                    ] as [$label, $pct, $key])
+                                        ['Cal', $meal->calories, $goals->calories, $mPctCal, 'cal'],
+                                        ['Pro', $meal->protein, $goals->protein, $mPctPro, 'pro'],
+                                        ['Crb', $meal->carbs, $goals->carbs, $mPctCarb, 'carb'],
+                                        ['Fat', $meal->fat, $goals->fat, $mPctFat, 'fat'],
+                                    ] as [$label, $m_macro, $g_macro, $pct, $key])
                                         <div class="meal-prog-item">
-                                            <div class="mp-label">{{ $label }} {{ $pct }}%</div>
+                                            <div class="mp-label">{{ $label }}</div>
+                                            <div class="mp-label">{{ $pct }}%</div>
+                                            <div class="mp-label"> {{$m_macro}}/{{ $g_macro }}</div>
                                             <div class="mp-track">
                                                 <div class="mp-fill fill-{{ $key }}" style="width:{{ min($pct, 100) }}%"></div>
                                             </div>

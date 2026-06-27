@@ -34,9 +34,9 @@ class Meal extends Model
         // Positive
         if ($this->protein >= 20)         $notes[] = ['type' => 'good', 'label' => 'High protein'];
         if ($this->fibre >= 5)            $notes[] = ['type' => 'good', 'label' => 'High fibre'];
-        if ($this->sugar <= 5 && $this->calories > 0)
+        if (($this->sugar > 0 && $this->sugar <= 25) && $this->calories > 0)
                                           $notes[] = ['type' => 'good', 'label' => 'Low sugar'];
-        if ($this->salt <= 0.3 && $this->calories > 0)
+        if (($this->salt > 0 && $this->salt <= 0.3) && $this->calories > 0)
                                           $notes[] = ['type' => 'good', 'label' => 'Low salt'];
         if ($this->saturated_fat <= 1.5 && $this->fat > 0)
                                           $notes[] = ['type' => 'good', 'label' => 'Low sat fat'];

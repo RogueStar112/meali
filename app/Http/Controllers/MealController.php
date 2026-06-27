@@ -49,8 +49,11 @@ class MealController extends Controller
 
     public function create()
     {
+        $previous_meals = Meal::latest()->take(24)->get();
+
         return view('meals.create', [
             'today' => now()->format('Y-m-d'),
+            'previous_meals' => $previous_meals ?? [],
             'meal'  => null,
         ]);
     }
@@ -75,11 +78,13 @@ class MealController extends Controller
         $validated['saturated_fat'] = $validated['saturated_fat'] ?? 0;
         $validated['sugar']         = $validated['sugar'] ?? 0;
         $validated['fibre']         = $validated['fibre'] ?? 0;
-        $validated['salt']          = $validated['salt'] ?? 0;
+        $validated['salt']          = $validgated['salt'] ?? 0;
 
         $imagePath = null;
         if ($request->hasFile('image')) {
             $imagePath = $request->file('image')->store('meals', 'public');
+        } elseif ($request->filled('reused_image_path')) {
+            $imagePath = $request->reused_image_path; // reuse existing path
         }
 
         Meal::create(array_merge($validated, ['image_path' => $imagePath]));
@@ -89,9 +94,13 @@ class MealController extends Controller
 
     public function edit(Meal $meal)
     {
+
+           $previous_meals = Meal::latest()->take(24)->get();
+
         return view('meals.create', [
             'today' => now()->format('Y-m-d'),
             'meal'  => $meal,
+            'previous_meals' => $previous_meals ?? [],
         ]);
     }
 

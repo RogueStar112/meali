@@ -13,4 +13,5 @@ Route::get('/meal/get/{id}', function (Request $request, $id) {
    $meal_to_find = Meal::find($id);
 
    return $meal_to_find;
+   
 })->name('api.get_meal');

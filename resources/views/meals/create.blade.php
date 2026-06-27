@@ -26,7 +26,7 @@
     .field { margin-bottom:20px; }
     .field-label { display:block; font-size:.72rem; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-secondary); margin-bottom:6px; }
     .field-label .optional { font-weight:400; text-transform:none; letter-spacing:0; color:var(--text-muted); }
-    input[type="text"], input[type="date"], input[type="number"] { width:100%; font-family:'Outfit',sans-serif; font-size:.88rem; color:var(--text-primary); background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px; outline:none; transition:border-color .2s,box-shadow .2s; -webkit-appearance:none; }
+    input[type="text"], input[type="date"], input[type="datetime-local"], input[type="number"] { width:100%; font-family:'Outfit',sans-serif; font-size:.88rem; color:var(--text-primary); background:var(--bg); border:1px solid var(--border); border-radius:8px; padding:10px 14px; outline:none; transition:border-color .2s,box-shadow .2s; -webkit-appearance:none; }
     input:focus { border-color:var(--text-primary); box-shadow:0 0 0 3px rgba(128,128,128,.1); }
     input.is-invalid { border-color:var(--fat); }
     .error { font-size:.72rem; color:var(--fat); margin-top:5px; }
@@ -42,6 +42,75 @@
     .btn-submit { flex:1; max-width:200px; background:var(--accent); color:var(--accent-fg); font-family:'Outfit',sans-serif; font-size:.85rem; font-weight:500; padding:12px 24px; border-radius:100px; border:none; cursor:pointer; transition:opacity .15s,transform .15s; }
     .btn-submit:hover { opacity:.8; transform:translateY(-1px); }
     .macro-preview { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; min-height:22px; }
+
+    input[type="number"], .previous-meal-gallery  {
+        width: 100%;
+        font-family: 'Outfit', sans-serif;
+        font-size: 0.88rem;
+        color: var(--text-primary);
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        outline: none;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        -webkit-appearance: none;
+    }
+
+
+    .previous-meal-img {
+        border-radius: 9999px;
+        object-fit: cover;
+        opacity: 1;
+    }
+
+    .previous-meal-img:hover {
+        transition: opacity 0.15s;
+        opacity: 0.4;
+    }
+
+    .previous-meal-gallery {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 2px;
+        padding: 9px;
+        /* justify-content: space-around; */
+    }
+    
+    .previous-meal-img-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        background:rgba(0,0,0,0.6);
+        border-radius: 9999px;
+    }
+
+    .previous-meal-img-container:hover .previous-meal-img-title {
+        opacity: 1;
+        transition: 0.15s;
+        visibility: visible;
+    }
+    
+
+    .previous-meal-img-title {
+        position: absolute;
+        text-align: center;
+        font-size: 75%;
+        opacity: 0;
+        user-select: none !important;
+        visibility: none;
+    }
+
+    .previous-meal-img-title {
+        color: white;
+    }
+
+    .previous-meals-title {
+        margin-bottom: 10px;
+        
+    }
 </style>
 @endpush
 
@@ -57,7 +126,23 @@
             setImage(e) {
                 const f = e.target.files[0];
                 if (f) this.preview = URL.createObjectURL(f);
+            },
+            async loadMeal(id) {
+                const res = await fetch(`/api/meal/get/${id}`);
+                const meal = await res.json();
+                this.name = meal.name;
+                this.calories = meal.calories;
+                this.protein = meal.protein;
+                this.carbs = meal.carbs;
+                this.fat = meal.fat;
+                this.saturated_fat = meal.saturated_fat;
+                this.salt = meal.salt;
+                this.fibre = meal.fibre;
+                this.sugar = meal.sugar;
+                this.preview = `/storage/${meal.image_path}`; // or whatever your public path is
+                this.$refs.reusedImage.value = meal.image_path; // store the raw path
             }
+                
          }">
 
         <div class="form-title">{{ $meal ? 'Edit meal' : 'Log a meal' }}</div>
@@ -84,20 +169,52 @@
                     <div class="upload-preview-overlay"><span>Change photo</span></div>
                 </div>
                 <input type="file" name="image" accept="image/*" x-ref="fileInput" @change="setImage($event)">
+                <input type="hidden" name="reused_image_path" x-ref="reusedImage">
             </div>
             @error('image') <div class="error">{{ $message }}</div> @enderror
+
+             <div class="field previous-meals">
+                
+                <p class="field-title previous-meals-title">Previous meals</p>
+
+                <div class="previous-meal-gallery">
+                @foreach($previous_meals as $previous_meal)
+
+                {{-- <form @submit.prevent="" action="{{ url("api/meal/get/$previous_meal->id")  }}" >
+                    @csrf --}}
+                    
+                    {{-- <button type="submit" >
+                        <p class="previous-meal-img-title">{{$previous_meal->name}}</p>
+
+                        <img class="previous-meal-img" src="{{ Storage::url($previous_meal->image_path) }}" width="64" height="64" @click="" /> 
+                    </button> --}}
+
+                    <button class="previous-meal-img-container" type="button" @click="loadMeal({{ $previous_meal->id }})">
+                        <p class="previous-meal-img-title">{{ $previous_meal->name }}</p>
+                        <img class="previous-meal-img" src="{{ Storage::url($previous_meal->image_path) }}" width="64" height="64" />
+                    </button>
+
+
+                {{-- </form> --}}
+
+
+
+                @endforeach
+                </div>
+
+            </div>
 
             {{-- Name --}}
             <div class="field">
                 <label class="field-label" for="name">Meal name</label>
-                <input type="text" id="name" name="name" value="{{ old('name', $meal->name ?? '') }}" placeholder="e.g. Grilled chicken & rice" class="{{ $errors->has('name') ? 'is-invalid' : '' }}" autocomplete="off">
+                <input type="text" x-model="name" id="name" name="name" value="{{ old('name', $meal->name ?? '') }}" placeholder="e.g. Grilled chicken & rice" class="{{ $errors->has('name') ? 'is-invalid' : '' }}" autocomplete="off">
                 @error('name') <div class="error">{{ $message }}</div> @enderror
             </div>
 
             {{-- Date --}}
             <div class="field">
-                <label class="field-label" for="eaten_at">Date</label>
-                <input type="date" id="eaten_at" name="eaten_at" value="{{ old('eaten_at', $meal ? $meal->eaten_at->format('Y-m-d') : $today) }}" class="{{ $errors->has('eaten_at') ? 'is-invalid' : '' }}">
+                <label class="field-label" for="eaten_at">Date & time</label>
+                <input type="datetime-local" id="eaten_at" name="eaten_at" value="">
                 @error('eaten_at') <div class="error">{{ $message }}</div> @enderror
             </div>
 
@@ -145,22 +262,22 @@
             <div class="grid-2">
                 <div>
                     <label class="field-label" for="saturated_fat">Sat. fat (g)</label>
-                    <input type="number" id="saturated_fat" name="saturated_fat" value="{{ old('saturated_fat', $meal->saturated_fat ?? '') }}" placeholder="0" min="0" max="999" step="0.1">
+                    <input type="number" x-model="saturated_fat" id="saturated_fat" name="saturated_fat" value="{{ old('saturated_fat', $meal->saturated_fat ?? '') }}" placeholder="0" min="0" max="999" step="0.1">
                     @error('saturated_fat') <div class="error">{{ $message }}</div> @enderror
                 </div>
                 <div>
                     <label class="field-label" for="sugar">Sugar (g)</label>
-                    <input type="number" id="sugar" name="sugar" value="{{ old('sugar', $meal->sugar ?? '') }}" placeholder="0" min="0" max="999" step="0.1">
+                    <input type="number" x-model="sugar" id="sugar" name="sugar" value="{{ old('sugar', $meal->sugar ?? '') }}" placeholder="0" min="0" max="999" step="0.1">
                     @error('sugar') <div class="error">{{ $message }}</div> @enderror
                 </div>
                 <div>
                     <label class="field-label" for="fibre">Fibre (g)</label>
-                    <input type="number" id="fibre" name="fibre" value="{{ old('fibre', $meal->fibre ?? '') }}" placeholder="0" min="0" max="999" step="0.1">
+                    <input type="number" x-model="fibre" id="fibre" name="fibre" value="{{ old('fibre', $meal->fibre ?? '') }}" placeholder="0" min="0" max="999" step="0.1">
                     @error('fibre') <div class="error">{{ $message }}</div> @enderror
                 </div>
                 <div>
                     <label class="field-label" for="salt">Salt (g)</label>
-                    <input type="number" id="salt" name="salt" value="{{ old('salt', $meal->salt ?? '') }}" placeholder="0" min="0" max="99" step="0.01">
+                    <input type="number" x-model="salt" id="salt" name="salt" value="{{ old('salt', $meal->salt ?? '') }}" placeholder="0" min="0" max="99" step="0.01">
                     @error('salt') <div class="error">{{ $message }}</div> @enderror
                 </div>
             </div>
@@ -174,4 +291,5 @@
         </form>
     </div>
 </div>
+
 @endsection
